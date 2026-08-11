@@ -236,6 +236,15 @@
       animation: rise 0.65s ease-out 0.14s both;
     }
 
+    .compare-charts .chart-wrap-tall {
+      min-height: 280px;
+    }
+
+    .chart-sub strong {
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+
     .chart-card {
       background: var(--surface);
       backdrop-filter: blur(10px);

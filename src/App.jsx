@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getApiBase, getReport, getReportMeta } from "./api/client";
 import DateControls from "./components/DateControls";
 import PerformanceCharts from "./components/PerformanceCharts";
+import CompareCharts from "./components/CompareCharts";
 import MetricsTable from "./components/MetricsTable";
 import CompareResults from "./components/CompareResults";
 import AiOverview from "./components/AiOverview";
@@ -246,13 +247,33 @@ export default function App() {
               rows={comparisonRows}
               metrics={metrics}
             />
+            <CompareCharts
+              key={`${appliedFrom}-${appliedTo}-${appliedCompareFrom}-${appliedCompareTo}`}
+              primaryPeriods={periods}
+              comparePeriods={comparePeriods}
+              primaryFrom={appliedFrom}
+              primaryTo={appliedTo}
+              compareFrom={appliedCompareFrom}
+              compareTo={appliedCompareTo}
+              metrics={metrics}
+              volumeKeys={meta.volumeKeys || DEFAULT_META.volumeKeys}
+              rateKeys={meta.rateKeys || DEFAULT_META.rateKeys}
+            />
             <PerformanceCharts
+              key={`primary-${appliedFrom}-${appliedTo}`}
+              heading="Primary"
+              rangeLabel={formatRangeLabel(appliedFrom, appliedTo)}
               periods={periods}
-              compareMode
-              primaryAggregate={primaryAggregate}
-              compareAggregate={compareAggregate}
-              primaryLabel="Primary"
-              compareLabel="Compare"
+              metrics={metrics}
+              volumeKeys={meta.volumeKeys || DEFAULT_META.volumeKeys}
+              rateKeys={meta.rateKeys || DEFAULT_META.rateKeys}
+              colors={meta.colors || DEFAULT_META.colors}
+            />
+            <PerformanceCharts
+              key={`compare-${appliedCompareFrom}-${appliedCompareTo}`}
+              heading="Compare"
+              rangeLabel={formatRangeLabel(appliedCompareFrom, appliedCompareTo)}
+              periods={comparePeriods}
               metrics={metrics}
               volumeKeys={meta.volumeKeys || DEFAULT_META.volumeKeys}
               rateKeys={meta.rateKeys || DEFAULT_META.rateKeys}
@@ -262,6 +283,8 @@ export default function App() {
         ) : (
           <>
             <PerformanceCharts
+              key={`single-${appliedFrom}-${appliedTo}`}
+              rangeLabel={formatRangeLabel(appliedFrom, appliedTo)}
               periods={periods}
               metrics={metrics}
               volumeKeys={meta.volumeKeys || DEFAULT_META.volumeKeys}
