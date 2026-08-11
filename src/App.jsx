@@ -11,8 +11,10 @@ import {
   aggregatePeriods,
   buildComparisonRows,
   formatRangeLabel,
+  maxCompareToDate,
   normalizeRange,
   suggestPreviousRange,
+  validateCompareRange,
 } from "./lib/metrics";
 
 export default function App() {
@@ -143,6 +145,24 @@ export default function App() {
     } · ${phases.join(" · ")}`;
   }, [periods, comparePeriods, compareActive, loading]);
 
+  const compareValidationError = useMemo(() => {
+    if (!compareEnabled) return "";
+    if (!draftFrom || !draftTo) return "";
+    if (!draftCompareFrom && !draftCompareTo) return "";
+    return validateCompareRange(
+      draftCompareFrom,
+      draftCompareTo,
+      draftFrom,
+      draftTo
+    );
+  }, [
+    compareEnabled,
+    draftFrom,
+    draftTo,
+    draftCompareFrom,
+    draftCompareTo,
+  ]);
+
   function handleApply() {
     if (!draftFrom || !draftTo) return;
     const primary = normalizeRange(draftFrom, draftTo);
@@ -152,10 +172,21 @@ export default function App() {
     setAppliedTo(primary.to);
 
     if (compareEnabled) {
-      if (!draftCompareFrom || !draftCompareTo) {
-        setError("Set both compare From and To dates, or turn off comparison.");
+      const validationError = validateCompareRange(
+        draftCompareFrom,
+        draftCompareTo,
+        primary.from,
+        primary.to
+      );
+      if (validationError) {
+        setError(validationError);
+        setCompareActive(false);
+        setAppliedCompareFrom("");
+        setAppliedCompareTo("");
+        setComparePeriods([]);
         return;
       }
+
       const compare = normalizeRange(draftCompareFrom, draftCompareTo);
       setDraftCompareFrom(compare.from);
       setDraftCompareTo(compare.to);
@@ -225,6 +256,8 @@ export default function App() {
           compareFrom={draftCompareFrom}
           compareTo={draftCompareTo}
           compareEnabled={compareEnabled}
+          compareMaxDate={maxCompareToDate(draftFrom)}
+          compareValidationError={compareValidationError}
           phaseNote={phaseNote}
           onFromChange={setDraftFrom}
           onToChange={setDraftTo}

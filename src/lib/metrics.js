@@ -98,6 +98,40 @@ export function suggestPreviousRange(from, to) {
   };
 }
 
+/** Compare range must fully end before the primary range starts. */
+export function isCompareBeforePrimary(compareFrom, compareTo, primaryFrom, primaryTo) {
+  if (!compareFrom || !compareTo || !primaryFrom || !primaryTo) return false;
+  const compare = normalizeRange(compareFrom, compareTo);
+  const primary = normalizeRange(primaryFrom, primaryTo);
+  return parseDate(compare.to) < parseDate(primary.from);
+}
+
+/** Latest allowed compare "To" date = day before primary From. */
+export function maxCompareToDate(primaryFrom) {
+  if (!primaryFrom) return "";
+  const dayMs = 24 * 60 * 60 * 1000;
+  return toIsoDate(new Date(parseDate(primaryFrom).getTime() - dayMs));
+}
+
+export function validateCompareRange(compareFrom, compareTo, primaryFrom, primaryTo) {
+  if (!compareFrom || !compareTo) {
+    return "Set both compare From and To dates, or turn off comparison.";
+  }
+
+  const compare = normalizeRange(compareFrom, compareTo);
+  const primary = normalizeRange(primaryFrom, primaryTo);
+
+  if (parseDate(compare.to) >= parseDate(primary.from)) {
+    return `Compare range must end before the primary range starts (before ${primary.from}).`;
+  }
+
+  if (parseDate(compare.from) > parseDate(compare.to)) {
+    return "Compare From date must be on or before Compare To date.";
+  }
+
+  return "";
+}
+
 /** Average metric values across periods in a selected date range. */
 export function aggregatePeriods(periods, metricsDefs = [], label = "Selected range") {
   if (!periods.length) return null;

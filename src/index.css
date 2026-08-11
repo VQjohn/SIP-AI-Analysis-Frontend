@@ -228,6 +228,17 @@
 
     .phase-note strong { color: var(--ink-soft); font-weight: 600; }
 
+    .phase-note.is-error {
+      color: var(--bad);
+      font-weight: 500;
+    }
+
+    .btn-apply:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .charts {
       display: grid;
       grid-template-columns: 1fr 1fr;
