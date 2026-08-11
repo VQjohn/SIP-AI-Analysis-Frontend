@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getApiBase, getReport, getReportMeta } from "./api/client";
 import DateControls from "./components/DateControls";
+import KpiSummary from "./components/KpiSummary";
 import PerformanceCharts from "./components/PerformanceCharts";
 import CompareCharts from "./components/CompareCharts";
 import MetricsTable from "./components/MetricsTable";
@@ -133,6 +134,11 @@ export default function App() {
     return buildComparisonRows(primaryAggregate, compareAggregate, metrics);
   }, [compareActive, primaryAggregate, compareAggregate, metrics]);
 
+  const latestPeriod = useMemo(
+    () => (periods.length ? periods[periods.length - 1] : null),
+    [periods]
+  );
+
   const phaseNote = useMemo(() => {
     if (loading) return "Loading selected dates…";
     if (!periods.length) return "No report periods overlap the primary range.";
@@ -228,7 +234,7 @@ export default function App() {
     <>
       <div className="page">
         <header className="hero">
-          <h1>AI Daily Average</h1>
+          <h1>AI Chatbot performance</h1>
           <p>
             Select a date range to review lead conversion performance, or compare it
             with an earlier period.
@@ -250,6 +256,8 @@ export default function App() {
             {error}
           </div>
         )}
+
+        <KpiSummary period={latestPeriod} metrics={metrics} loading={loading} />
 
         <DateControls
           rangeFrom={draftFrom}
