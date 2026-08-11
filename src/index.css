@@ -299,12 +299,28 @@
       font-weight: 600;
     }
 
+    .kpi-section {
+      margin-bottom: 1.25rem;
+      animation: rise 0.55s ease-out 0.06s both;
+    }
+
+    .kpi-section-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.35rem 1rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .kpi-variance-note {
+      font-size: 0.8rem;
+    }
+
     .kpi-strip {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 0.75rem;
-      margin-bottom: 1.25rem;
-      animation: rise 0.55s ease-out 0.06s both;
     }
 
     .kpi-card {

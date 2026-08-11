@@ -1,12 +1,4 @@
-import { formatValue, isFavorable, varianceLabel } from "../lib/metrics";
-
-const KPI_KEYS = [
-  "totalLeads",
-  "replied",
-  "contactRate",
-  "signUps",
-  "conversionRate",
-];
+import { formatValue, varianceLabel } from "../lib/metrics";
 
 function MetricIcon({ metricKey }) {
   const common = {
@@ -75,59 +67,61 @@ function MetricIcon({ metricKey }) {
   }
 }
 
-export default function KpiSummary({ period, metrics = [], loading = false }) {
-  const cards = KPI_KEYS.map((key) => {
-    const def = metrics.find((m) => m.key === key) || {
-      key,
-      label: key,
-      kind: "count",
-      invert: false,
-    };
-    const cell = period?.metrics?.[key] || { value: null, variance: null, up: null };
-    const favorable = isFavorable(def, cell);
-    return { def, cell, favorable };
-  });
-
+export default function KpiSummary({
+  cards = [],
+  loading = false,
+  rangeLabel = "",
+  varianceLabelText = "vs previous period",
+}) {
   return (
-    <section className="kpi-strip" aria-label="Key performance indicators">
-      {cards.map(({ def, cell, favorable }) => {
-        const pillClass =
-          cell.variance == null || favorable == null
-            ? "na"
-            : favorable
-              ? "good"
-              : "bad";
-        const arrow =
-          cell.up == null ? null : cell.up ? "▲" : "▼";
-
-        return (
-          <article key={def.key} className="kpi-card">
-            <div className="kpi-card-top">
-              <span className="kpi-icon">
-                <MetricIcon metricKey={def.key} />
-              </span>
-              <h3 className="kpi-label">{def.label}</h3>
-            </div>
-            <p className="kpi-value">
-              {loading
-                ? "—"
-                : cell.value == null
-                  ? "—"
-                  : formatValue(def, cell)}
+    <section className="kpi-section" aria-label="Key performance indicators">
+      {(rangeLabel || varianceLabelText) && (
+        <div className="kpi-section-meta">
+          {rangeLabel && (
+            <p className="phase-note">
+              Averages for <strong>{rangeLabel}</strong>
             </p>
-            <div className="kpi-card-bottom">
-              <span className={`var-pill ${pillClass}`}>
-                {arrow && (
-                  <span className="arrow" aria-hidden="true">
-                    {arrow}
-                  </span>
-                )}
-                {loading || cell.variance == null ? "N/A" : varianceLabel(cell)}
-              </span>
-            </div>
-          </article>
-        );
-      })}
+          )}
+          {varianceLabelText && (
+            <p className="phase-note kpi-variance-note">{varianceLabelText}</p>
+          )}
+        </div>
+      )}
+      <div className="kpi-strip">
+        {cards.map(({ key, def, cell, favorable }) => {
+          const pillClass =
+            cell.variance == null || favorable == null
+              ? "na"
+              : favorable
+                ? "good"
+                : "bad";
+          const arrow = cell.up == null ? null : cell.up ? "▲" : "▼";
+
+          return (
+            <article key={key} className="kpi-card">
+              <div className="kpi-card-top">
+                <span className="kpi-icon">
+                  <MetricIcon metricKey={key} />
+                </span>
+                <h3 className="kpi-label">{def.label}</h3>
+              </div>
+              <p className="kpi-value">
+                {loading || cell.value == null ? "—" : formatValue(def, cell)}
+              </p>
+              <div className="kpi-card-bottom">
+                <span className={`var-pill ${pillClass}`}>
+                  {arrow && (
+                    <span className="arrow" aria-hidden="true">
+                      {arrow}
+                    </span>
+                  )}
+                  {loading || cell.variance == null ? "N/A" : varianceLabel(cell)}
+                </span>
+              </div>
+            </article>
+          );
+        })}
+      </div>
     </section>
   );
 }

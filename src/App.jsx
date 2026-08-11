@@ -11,6 +11,7 @@ import { DEFAULT_FROM, DEFAULT_META, DEFAULT_TO } from "./data/reportData";
 import {
   aggregatePeriods,
   buildComparisonRows,
+  buildKpiCards,
   formatRangeLabel,
   maxCompareToDate,
   normalizeRange,
@@ -35,6 +36,7 @@ export default function App() {
 
   const [periods, setPeriods] = useState([]);
   const [comparePeriods, setComparePeriods] = useState([]);
+  const [baselinePeriods, setBaselinePeriods] = useState([]);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [dataSource, setDataSource] = useState("loading");
   const [loading, setLoading] = useState(true);
@@ -88,14 +90,20 @@ export default function App() {
           const compare = await getReport(appliedCompareFrom, appliedCompareTo);
           if (cancelled) return;
           setComparePeriods(compare.data.periods || []);
+          setBaselinePeriods([]);
           if (compare.source === "api") setDataSource("api");
         } else {
           setComparePeriods([]);
+          const prev = suggestPreviousRange(appliedFrom, appliedTo);
+          const baseline = await getReport(prev.from, prev.to);
+          if (cancelled) return;
+          setBaselinePeriods(baseline.data.periods || []);
         }
       } catch (err) {
         if (!cancelled) {
           setPeriods([]);
           setComparePeriods([]);
+          setBaselinePeriods([]);
           setError(err.message || "Failed to load report");
         }
       } finally {
@@ -134,10 +142,38 @@ export default function App() {
     return buildComparisonRows(primaryAggregate, compareAggregate, metrics);
   }, [compareActive, primaryAggregate, compareAggregate, metrics]);
 
-  const latestPeriod = useMemo(
-    () => (periods.length ? periods[periods.length - 1] : null),
-    [periods]
+  const baselineAggregate = useMemo(() => {
+    if (compareActive) return compareAggregate;
+    const prev = suggestPreviousRange(appliedFrom, appliedTo);
+    return aggregatePeriods(
+      baselinePeriods,
+      metrics,
+      `Baseline (${formatRangeLabel(prev.from, prev.to)})`
+    );
+  }, [
+    compareActive,
+    compareAggregate,
+    baselinePeriods,
+    metrics,
+    appliedFrom,
+    appliedTo,
+  ]);
+
+  const kpiCards = useMemo(
+    () =>
+      buildKpiCards(
+        primaryAggregate,
+        baselineAggregate,
+        metrics,
+        undefined,
+        periods.length === 1 ? periods[0] : null
+      ),
+    [primaryAggregate, baselineAggregate, metrics, periods]
   );
+
+  const kpiVarianceNote = compareActive
+    ? `vs compare ${formatRangeLabel(appliedCompareFrom, appliedCompareTo)}`
+    : "vs previous period of equal length";
 
   const phaseNote = useMemo(() => {
     if (loading) return "Loading selected dates…";
@@ -257,8 +293,6 @@ export default function App() {
           </div>
         )}
 
-        <KpiSummary period={latestPeriod} metrics={metrics} loading={loading} />
-
         <DateControls
           rangeFrom={draftFrom}
           rangeTo={draftTo}
@@ -275,6 +309,13 @@ export default function App() {
           onCompareEnabledChange={handleCompareEnabledChange}
           onApply={handleApply}
           onSuggestPrevious={handleSuggestPrevious}
+        />
+
+        <KpiSummary
+          cards={kpiCards}
+          loading={loading}
+          rangeLabel={formatRangeLabel(appliedFrom, appliedTo)}
+          varianceLabelText={kpiVarianceNote}
         />
 
         {compareActive ? (

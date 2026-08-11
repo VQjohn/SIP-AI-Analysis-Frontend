@@ -201,3 +201,78 @@ export function buildComparisonRows(primary, compare, metricsDefs = []) {
     };
   });
 }
+
+export const KPI_KEYS = [
+  "totalLeads",
+  "replied",
+  "contactRate",
+  "signUps",
+  "conversionRate",
+];
+
+/** Build KPI cells from a primary range aggregate vs an optional baseline aggregate. */
+export function buildKpiCards(
+  primary,
+  baseline = null,
+  metricsDefs = [],
+  keys = KPI_KEYS,
+  fallbackPeriod = null
+) {
+  return keys.map((key) => {
+    const def = metricsDefs.find((m) => m.key === key) || {
+      key,
+      label: key,
+      kind: "count",
+      invert: false,
+    };
+
+    const primaryValue = primary?.metrics?.[key]?.value;
+    const hasPrimary = typeof primaryValue === "number" && !Number.isNaN(primaryValue);
+    const baselineValue = baseline?.metrics?.[key]?.value;
+    const hasBaseline =
+      typeof baselineValue === "number" && !Number.isNaN(baselineValue);
+
+    let cell = {
+      value: hasPrimary ? primaryValue : null,
+      variance: null,
+      unit: def.kind === "rate" ? "ppts" : "%",
+      up: null,
+    };
+
+    if (hasPrimary && hasBaseline) {
+      if (def.kind === "rate") {
+        const diff = +(primaryValue - baselineValue).toFixed(1);
+        cell = {
+          value: primaryValue,
+          variance: Math.abs(diff),
+          unit: "ppts",
+          up: diff === 0 ? null : diff > 0,
+        };
+      } else if (baselineValue === 0) {
+        cell = {
+          value: primaryValue,
+          variance: primaryValue === 0 ? 0 : null,
+          unit: "%",
+          up: primaryValue === 0 ? null : primaryValue > 0,
+        };
+      } else {
+        const pct = +(((primaryValue - baselineValue) / Math.abs(baselineValue)) * 100).toFixed(1);
+        cell = {
+          value: primaryValue,
+          variance: Math.abs(pct),
+          unit: "%",
+          up: pct === 0 ? null : pct > 0,
+        };
+      }
+    } else if (hasPrimary && !baseline && fallbackPeriod?.metrics?.[key]) {
+      cell = { ...fallbackPeriod.metrics[key], value: primaryValue };
+    }
+
+    return {
+      key: def.key,
+      def,
+      cell,
+      favorable: isFavorable(def, cell),
+    };
+  });
+}
