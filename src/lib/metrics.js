@@ -71,3 +71,92 @@ export function normalizeRange(from, to) {
   if (parseDate(from) > parseDate(to)) return { from: to, to: from };
   return { from, to };
 }
+
+export function toIsoDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function formatRangeLabel(from, to) {
+  if (!from || !to) return "—";
+  return `${from} → ${to}`;
+}
+
+/** Suggest a compare range of equal length immediately before the primary range. */
+export function suggestPreviousRange(from, to) {
+  const start = parseDate(from);
+  const end = parseDate(to);
+  const dayMs = 24 * 60 * 60 * 1000;
+  const lengthDays = Math.round((end - start) / dayMs) + 1;
+  const prevEnd = new Date(start.getTime() - dayMs);
+  const prevStart = new Date(prevEnd.getTime() - (lengthDays - 1) * dayMs);
+  return {
+    from: toIsoDate(prevStart),
+    to: toIsoDate(prevEnd),
+  };
+}
+
+/** Average metric values across periods in a selected date range. */
+export function aggregatePeriods(periods, metricsDefs = [], label = "Selected range") {
+  if (!periods.length) return null;
+
+  const metrics = {};
+  metricsDefs.forEach((def) => {
+    const values = periods
+      .map((p) => p.metrics?.[def.key]?.value)
+      .filter((v) => typeof v === "number" && !Number.isNaN(v));
+    const units = periods.map((p) => p.metrics?.[def.key]?.unit).filter(Boolean);
+    const avg =
+      values.length > 0
+        ? +(values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(2)
+        : 0;
+    metrics[def.key] = {
+      value: avg,
+      variance: null,
+      unit: units[0] || (def.kind === "rate" ? "ppts" : "%"),
+      up: null,
+    };
+  });
+
+  return {
+    id: "aggregate",
+    label,
+    start: periods[0].start,
+    end: periods[periods.length - 1].end,
+    phase: periods.length === 1 ? periods[0].phase : "Aggregated selection",
+    phaseSub:
+      periods.length === 1
+        ? periods[0].phaseSub
+        : `${periods.length} periods averaged`,
+    metrics,
+    periodCount: periods.length,
+  };
+}
+
+export function buildComparisonRows(primary, compare, metricsDefs = []) {
+  if (!primary || !compare) return [];
+
+  return metricsDefs.map((def) => {
+    const a = primary.metrics[def.key]?.value ?? 0;
+    const b = compare.metrics[def.key]?.value ?? 0;
+    const diff = +(a - b).toFixed(2);
+    const improved = def.invert ? diff < 0 : diff > 0;
+    const unchanged = diff === 0;
+    const unit = def.kind === "rate" ? "ppts" : "";
+    const sign = diff > 0 ? "+" : "";
+
+    return {
+      key: def.key,
+      label: def.label,
+      kind: def.kind,
+      invert: def.invert,
+      primary: a,
+      compare: b,
+      diff,
+      diffLabel: unchanged ? "0" : `${sign}${diff}${unit}`,
+      improved: unchanged ? null : improved,
+    };
+  });
+}

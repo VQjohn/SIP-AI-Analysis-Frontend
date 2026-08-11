@@ -108,35 +108,22 @@
       color: var(--muted);
     }
 
-    .presets {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
-
-    .preset {
-      border: 1px solid var(--line);
-      background: var(--surface-solid);
-      color: var(--ink-soft);
-      border-radius: 999px;
-      padding: 0.42rem 0.85rem;
-      font: inherit;
+    .compare-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      text-transform: none;
+      letter-spacing: 0;
       font-size: 0.88rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--ink-soft);
       cursor: pointer;
-      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
     }
 
-    .preset:hover {
-      border-color: var(--teal);
-      color: var(--teal-deep);
-      transform: translateY(-1px);
-    }
-
-    .preset.active {
-      background: var(--teal);
-      border-color: var(--teal);
-      color: #fff;
+    .compare-toggle input {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--teal);
     }
 
     .range-inputs {
@@ -144,6 +131,49 @@
       flex-wrap: wrap;
       gap: 0.55rem;
       align-items: center;
+    }
+
+    .range-inputs.is-disabled {
+      opacity: 0.45;
+    }
+
+    .control-actions {
+      justify-content: flex-end;
+    }
+
+    .btn-secondary {
+      align-self: flex-end;
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--ink-soft);
+      border-radius: 10px;
+      padding: 0.55rem 0.85rem;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--teal);
+      color: var(--teal-deep);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      text-align: left;
+    }
+
+    .compare-table th:not(:first-child),
+    .compare-table td:not(:first-child) {
+      text-align: center;
     }
 
     .range-inputs label {

@@ -23,12 +23,5 @@ export const DEFAULT_META = {
     conversionRate: "#0369a1",
     lostRate: "#be123c",
   },
-  presets: [
-    { id: "all", label: "All periods", from: "2026-06-19", to: "2026-07-19" },
-    { id: "p1", label: "Jun 19–25", from: "2026-06-19", to: "2026-06-25" },
-    { id: "p2", label: "Jun 26–Jul 5", from: "2026-06-26", to: "2026-07-05" },
-    { id: "portfolio", label: "10Gbps Portfolio", from: "2026-06-19", to: "2026-07-05" },
-    { id: "retail", label: "Retail hand-off", from: "2026-07-06", to: "2026-07-19" },
-  ],
   defaults: { from: DEFAULT_FROM, to: DEFAULT_TO },
 };

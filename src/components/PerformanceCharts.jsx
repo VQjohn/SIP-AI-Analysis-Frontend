@@ -44,6 +44,11 @@ const commonOptions = {
 
 export default function PerformanceCharts({
   periods,
+  compareMode = false,
+  primaryAggregate = null,
+  compareAggregate = null,
+  primaryLabel = "Primary",
+  compareLabel = "Compare",
   metrics = DEFAULT_META.metrics,
   volumeKeys = DEFAULT_META.volumeKeys,
   rateKeys = DEFAULT_META.rateKeys,
@@ -55,90 +60,180 @@ export default function PerformanceCharts({
   const rateChart = useRef(null);
 
   useEffect(() => {
-    const labels = periods.map((p) => p.label);
-    const empty = !periods.length;
-
     if (volumeChart.current) volumeChart.current.destroy();
     if (rateChart.current) rateChart.current.destroy();
 
-    volumeChart.current = new Chart(volumeRef.current, {
-      type: "bar",
-      data: {
-        labels: empty ? ["No data"] : labels,
-        datasets: empty
-          ? []
-          : volumeKeys.map((key) => {
-              const def = metrics.find((m) => m.key === key) || { label: key };
-              return {
-                label: def.label.replace(" Count", "").replace(" AI", ""),
-                data: periods.map((p) => p.metrics[key]?.value ?? 0),
-                backgroundColor: colors[key],
-                borderRadius: 6,
-                maxBarThickness: 28,
-              };
-            }),
-      },
-      options: commonOptions,
-    });
+    if (compareMode && primaryAggregate && compareAggregate) {
+      const volumeLabels = volumeKeys.map((key) => {
+        const def = metrics.find((m) => m.key === key);
+        return (def?.label || key).replace(" Count", "").replace(" AI", "");
+      });
+      const rateLabels = rateKeys.map((key) => {
+        const def = metrics.find((m) => m.key === key);
+        return def?.label || key;
+      });
 
-    rateChart.current = new Chart(rateRef.current, {
-      type: "line",
-      data: {
-        labels: empty ? ["No data"] : labels,
-        datasets: empty
-          ? []
-          : rateKeys.map((key) => {
-              const def = metrics.find((m) => m.key === key) || { label: key };
-              return {
-                label: def.label,
-                data: periods.map((p) => p.metrics[key]?.value ?? 0),
-                borderColor: colors[key],
-                backgroundColor: `${colors[key]}22`,
-                tension: 0.35,
-                fill: false,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                pointBackgroundColor: "#fff",
-                pointBorderWidth: 2,
-                borderWidth: 2.5,
-              };
-            }),
-      },
-      options: {
-        ...commonOptions,
-        scales: {
-          ...commonOptions.scales,
-          y: {
-            ...commonOptions.scales.y,
-            ticks: {
-              ...commonOptions.scales.y.ticks,
-              callback: (v) => `${v}%`,
+      volumeChart.current = new Chart(volumeRef.current, {
+        type: "bar",
+        data: {
+          labels: volumeLabels,
+          datasets: [
+            {
+              label: primaryLabel,
+              data: volumeKeys.map((key) => primaryAggregate.metrics[key]?.value ?? 0),
+              backgroundColor: "#0f766e",
+              borderRadius: 6,
+              maxBarThickness: 36,
+            },
+            {
+              label: compareLabel,
+              data: volumeKeys.map((key) => compareAggregate.metrics[key]?.value ?? 0),
+              backgroundColor: "#94a3b8",
+              borderRadius: 6,
+              maxBarThickness: 36,
+            },
+          ],
+        },
+        options: commonOptions,
+      });
+
+      rateChart.current = new Chart(rateRef.current, {
+        type: "bar",
+        data: {
+          labels: rateLabels,
+          datasets: [
+            {
+              label: primaryLabel,
+              data: rateKeys.map((key) => primaryAggregate.metrics[key]?.value ?? 0),
+              backgroundColor: "#0369a1",
+              borderRadius: 6,
+              maxBarThickness: 36,
+            },
+            {
+              label: compareLabel,
+              data: rateKeys.map((key) => compareAggregate.metrics[key]?.value ?? 0),
+              backgroundColor: "#cbd5e1",
+              borderRadius: 6,
+              maxBarThickness: 36,
+            },
+          ],
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            ...commonOptions.scales,
+            y: {
+              ...commonOptions.scales.y,
+              ticks: {
+                ...commonOptions.scales.y.ticks,
+                callback: (v) => `${v}%`,
+              },
             },
           },
         },
-      },
-    });
+      });
+    } else {
+      const labels = periods.map((p) => p.label);
+      const empty = !periods.length;
+
+      volumeChart.current = new Chart(volumeRef.current, {
+        type: "bar",
+        data: {
+          labels: empty ? ["No data"] : labels,
+          datasets: empty
+            ? []
+            : volumeKeys.map((key) => {
+                const def = metrics.find((m) => m.key === key) || { label: key };
+                return {
+                  label: def.label.replace(" Count", "").replace(" AI", ""),
+                  data: periods.map((p) => p.metrics[key]?.value ?? 0),
+                  backgroundColor: colors[key],
+                  borderRadius: 6,
+                  maxBarThickness: 28,
+                };
+              }),
+        },
+        options: commonOptions,
+      });
+
+      rateChart.current = new Chart(rateRef.current, {
+        type: "line",
+        data: {
+          labels: empty ? ["No data"] : labels,
+          datasets: empty
+            ? []
+            : rateKeys.map((key) => {
+                const def = metrics.find((m) => m.key === key) || { label: key };
+                return {
+                  label: def.label,
+                  data: periods.map((p) => p.metrics[key]?.value ?? 0),
+                  borderColor: colors[key],
+                  backgroundColor: `${colors[key]}22`,
+                  tension: 0.35,
+                  fill: false,
+                  pointRadius: 5,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: "#fff",
+                  pointBorderWidth: 2,
+                  borderWidth: 2.5,
+                };
+              }),
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            ...commonOptions.scales,
+            y: {
+              ...commonOptions.scales.y,
+              ticks: {
+                ...commonOptions.scales.y.ticks,
+                callback: (v) => `${v}%`,
+              },
+            },
+          },
+        },
+      });
+    }
 
     return () => {
       volumeChart.current?.destroy();
       rateChart.current?.destroy();
     };
-  }, [periods, metrics, volumeKeys, rateKeys, colors]);
+  }, [
+    periods,
+    compareMode,
+    primaryAggregate,
+    compareAggregate,
+    primaryLabel,
+    compareLabel,
+    metrics,
+    volumeKeys,
+    rateKeys,
+    colors,
+  ]);
 
   return (
     <section className="charts" aria-label="Performance charts">
       <article className="chart-card">
-        <h2>Volume metrics</h2>
-        <p className="chart-sub">Daily averages — leads, replies, sign-ups, and lost leads</p>
+        <h2>{compareMode ? "Volume comparison" : "Volume metrics"}</h2>
+        <p className="chart-sub">
+          {compareMode
+            ? "Averaged volume metrics for each selected date range"
+            : "Daily averages — leads, replies, sign-ups, and lost leads"}
+        </p>
         <div className="chart-wrap">
-          <canvas ref={volumeRef} aria-label="Volume metrics bar chart" />
+          <canvas ref={volumeRef} aria-label="Volume metrics chart" />
         </div>
       </article>
       <article className="chart-card">
-        <h2>Rate trends</h2>
-        <p className="chart-sub">Contact, conversion, and lost-leads rates (%)</p>
+        <h2>{compareMode ? "Rate comparison" : "Rate trends"}</h2>
+        <p className="chart-sub">
+          {compareMode
+            ? "Averaged contact, conversion, and lost-leads rates"
+            : "Contact, conversion, and lost-leads rates (%)"}
+        </p>
         <div className="chart-wrap">
-          <canvas ref={rateRef} aria-label="Rate trends line chart" />
+          <canvas ref={rateRef} aria-label="Rate metrics chart" />
         </div>
       </article>
     </section>
