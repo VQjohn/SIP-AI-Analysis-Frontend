@@ -134,15 +134,16 @@ export default function App() {
   }, [compareActive, primaryAggregate, compareAggregate, metrics]);
 
   const phaseNote = useMemo(() => {
-    if (loading) return "Loading report for selected dates…";
-    if (!periods.length) return "No overlapping report periods for the primary range.";
+    if (loading) return "Loading selected dates…";
+    if (!periods.length) return "No report periods overlap the primary range.";
     if (compareActive) {
-      return `Primary: <strong>${periods.length}</strong> period(s) · Compare: <strong>${comparePeriods.length}</strong> period(s)`;
+      return `<strong>${periods.length}</strong> primary · <strong>${comparePeriods.length}</strong> compare`;
     }
     const phases = [...new Set(periods.map((p) => p.phase))];
-    return `Showing <strong>${periods.length}</strong> period${
+    const phaseText = phases.length ? ` · ${phases.join(" · ")}` : "";
+    return `<strong>${periods.length}</strong> period${
       periods.length > 1 ? "s" : ""
-    } · ${phases.join(" · ")}`;
+    }${phaseText}`;
   }, [periods, comparePeriods, compareActive, loading]);
 
   const compareValidationError = useMemo(() => {
@@ -229,17 +230,17 @@ export default function App() {
         <header className="hero">
           <h1>AI Daily Average</h1>
           <p>
-            Choose date ranges to analyze lead conversion metrics — optionally compare
-            two selections side by side.
+            Select a date range to review lead conversion performance, or compare it
+            with an earlier period.
           </p>
-          <p className="phase-note" style={{ marginTop: "0.75rem" }}>
-            Data source:{" "}
+          <p className="hero-meta">
+            Source:{" "}
             <strong>
               {dataSource === "api"
                 ? `API (${getApiBase()})`
                 : dataSource === "sample"
-                  ? "sample JSON (/sample)"
-                  : "loading…"}
+                  ? "Sample data"
+                  : "Loading…"}
             </strong>
           </p>
         </header>

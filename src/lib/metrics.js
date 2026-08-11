@@ -113,6 +113,16 @@ export function maxCompareToDate(primaryFrom) {
   return toIsoDate(new Date(parseDate(primaryFrom).getTime() - dayMs));
 }
 
+function formatDisplayDate(iso) {
+  if (!iso) return "";
+  const date = parseDate(iso);
+  return date.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 export function validateCompareRange(compareFrom, compareTo, primaryFrom, primaryTo) {
   if (!compareFrom || !compareTo) {
     return "Set both compare From and To dates, or turn off comparison.";
@@ -120,13 +130,10 @@ export function validateCompareRange(compareFrom, compareTo, primaryFrom, primar
 
   const compare = normalizeRange(compareFrom, compareTo);
   const primary = normalizeRange(primaryFrom, primaryTo);
+  const maxTo = maxCompareToDate(primary.from);
 
   if (parseDate(compare.to) >= parseDate(primary.from)) {
-    return `Compare range must end before the primary range starts (before ${primary.from}).`;
-  }
-
-  if (parseDate(compare.from) > parseDate(compare.to)) {
-    return "Compare From date must be on or before Compare To date.";
+    return `Compare range must end before the primary range starts (on or before ${formatDisplayDate(maxTo)}).`;
   }
 
   return "";
