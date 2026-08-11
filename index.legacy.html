@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Daily Average</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --ink: #14212b;
+      --ink-soft: #3d4f5c;
+      --muted: #6b7c88;
+      --line: #d5dde3;
+      --surface: rgba(255, 255, 255, 0.88);
+      --surface-solid: #ffffff;
+      --teal: #0f766e;
+      --teal-deep: #115e59;
+      --teal-soft: #ccfbf1;
+      --good: #15803d;
+      --good-bg: #dcfce7;
+      --bad: #b91c1c;
+      --bad-bg: #fee2e2;
+      --shadow: 0 18px 50px rgba(20, 33, 43, 0.08);
+      --radius: 16px;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "DM Sans", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(15, 118, 110, 0.14), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(20, 33, 43, 0.08), transparent 50%),
+        linear-gradient(165deg, #eef4f6 0%, #f7fafb 45%, #e8f0f2 100%);
+      background-attachment: fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(20, 33, 43, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 33, 43, 0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 20%, black, transparent);
+    }
+
+    .page {
+      position: relative;
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.25rem 0 6.5rem;
+    }
+
+    .hero {
+      margin-bottom: 1.75rem;
+      animation: rise 0.55s ease-out both;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 5vw, 3.5rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--ink);
+    }
+
+    .hero p {
+      margin: 0.65rem 0 0;
+      max-width: 36rem;
+      font-size: 1.05rem;
+      color: var(--ink-soft);
+      line-height: 1.45;
+    }
+
+    .panel {
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(213, 221, 227, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.15rem 1.25rem;
+      animation: rise 0.6s ease-out 0.08s both;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 1.25rem;
+      align-items: flex-end;
+      margin-bottom: 1.25rem;
+    }
+
+    .control-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      min-width: 0;
+    }
+
+    .control-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .preset {
+      border: 1px solid var(--line);
+      background: var(--surface-solid);
+      color: var(--ink-soft);
+      border-radius: 999px;
+      padding: 0.42rem 0.85rem;
+      font: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .preset:hover {
+      border-color: var(--teal);
+      color: var(--teal-deep);
+      transform: translateY(-1px);
+    }
+
+    .preset.active {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+
+    .range-inputs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    .range-inputs label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .range-inputs input[type="date"] {
+      font: inherit;
+      font-size: 0.9rem;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.45rem 0.6rem;
+      background: var(--surface-solid);
+      min-width: 9.5rem;
+    }
+
+    .range-inputs input[type="date"]:focus {
+      outline: 2px solid rgba(15, 118, 110, 0.35);
+      border-color: var(--teal);
+    }
+
+    .btn-apply {
+      align-self: flex-end;
+      border: none;
+      background: var(--ink);
+      color: #fff;
+      border-radius: 10px;
+      padding: 0.55rem 0.95rem;
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.18s ease;
+    }
+
+    .btn-apply:hover {
+      background: var(--teal-deep);
+      transform: translateY(-1px);
+    }
+
+    .phase-note {
+      margin: 0.15rem 0 0;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .phase-note strong { color: var(--ink-soft); font-weight: 600; }
+
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      animation: rise 0.65s ease-out 0.14s both;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(213, 221, 227, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.1rem 0.85rem;
+      min-height: 320px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card h2 {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .chart-card .chart-sub {
+      margin: 0 0 0.75rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .chart-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 240px;
+    }
+
+    .table-panel {
+      animation: rise 0.7s ease-out 0.2s both;
+    }
+
+    .table-panel h2 {
+      margin: 0 0 0.25rem;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .table-panel .chart-sub {
+      margin: 0 0 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      padding-bottom: 0.25rem;
+    }
+
+    table.metrics {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 720px;
+      font-size: 0.92rem;
+    }
+
+    table.metrics th,
+    table.metrics td {
+      border-bottom: 1px solid var(--line);
+      padding: 0.65rem 0.7rem;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    table.metrics th:first-child,
+    table.metrics td:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: var(--surface-solid);
+      z-index: 2;
+      font-weight: 600;
+      min-width: 10.5rem;
+    }
+
+    table.metrics thead th {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      background: #f3f7f8;
+      border-bottom: 1px solid var(--line);
+    }
+
+    table.metrics thead tr.phase th {
+      font-size: 0.8rem;
+      color: var(--teal-deep);
+      background: var(--teal-soft);
+      border-bottom: 1px solid #99f6e4;
+      padding-top: 0.7rem;
+      padding-bottom: 0.35rem;
+    }
+
+    table.metrics thead tr.phase th .phase-sub {
+      display: block;
+      margin-top: 0.15rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    table.metrics thead tr.dates th {
+      font-weight: 700;
+      color: var(--ink);
+      padding-top: 0.45rem;
+    }
+
+    table.metrics thead tr.subhead th {
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-top: 0.25rem;
+      padding-bottom: 0.55rem;
+    }
+
+    table.metrics tbody tr:last-child td { border-bottom: none; }
+
+    table.metrics tbody tr:hover td { background: rgba(204, 251, 241, 0.28); }
+    table.metrics tbody tr:hover td:first-child { background: #eefaf7; }
+
+    .cell-stack {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.28rem;
+      min-width: 4.5rem;
+    }
+
+    .metric-value {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+
+    .var-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      border-radius: 999px;
+      padding: 0.15rem 0.45rem 0.15rem 0.2rem;
+      white-space: nowrap;
+    }
+
+    .var-pill .arrow {
+      width: 1.05rem;
+      height: 1.05rem;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      font-size: 0.65rem;
+      line-height: 1;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .var-pill.good { background: var(--good-bg); color: var(--good); }
+    .var-pill.good .arrow { background: var(--good); }
+    .var-pill.bad { background: var(--bad-bg); color: var(--bad); }
+    .var-pill.bad .arrow { background: var(--bad); }
+    .var-pill.na { background: #f1f5f9; color: var(--muted); padding-left: 0.45rem; }
+
+    .empty-state {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .overview-dock {
+      position: fixed;
+      left: 50%;
+      bottom: 1.25rem;
+      transform: translateX(-50%);
+      z-index: 50;
+      width: min(1180px, calc(100% - 2rem));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.75rem;
+      pointer-events: none;
+    }
+
+    .overview-dock > * {
+      pointer-events: auto;
+    }
+
+    .btn-overview {
+      border: none;
+      background: var(--teal);
+      color: #fff;
+      border-radius: 999px;
+      padding: 0.9rem 1.25rem;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow:
+        0 10px 28px rgba(15, 118, 110, 0.35),
+        0 2px 8px rgba(20, 33, 43, 0.12);
+      transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn-overview:hover {
+      background: var(--teal-deep);
+      transform: translateY(-2px);
+      box-shadow:
+        0 14px 34px rgba(15, 118, 110, 0.4),
+        0 4px 12px rgba(20, 33, 43, 0.14);
+    }
+
+    .btn-overview:active {
+      transform: translateY(0);
+    }
+
+    .btn-overview.is-open {
+      background: var(--ink);
+      box-shadow:
+        0 10px 28px rgba(20, 33, 43, 0.28),
+        0 2px 8px rgba(20, 33, 43, 0.12);
+    }
+
+    .overview {
+      width: 100%;
+      max-height: min(62vh, 520px);
+      overflow: auto;
+      margin: 0;
+      border-left: 3px solid var(--teal);
+      box-shadow:
+        0 18px 50px rgba(20, 33, 43, 0.16),
+        0 4px 16px rgba(20, 33, 43, 0.08);
+      animation: float-up 0.35s ease-out both;
+    }
+
+    .overview.is-hidden {
+      display: none;
+    }
+
+    @keyframes float-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .overview-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem 1rem;
+      margin-bottom: 0.85rem;
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      z-index: 1;
+      padding-bottom: 0.15rem;
+    }
+
+    .overview-header h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .overview-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--teal-deep);
+      background: var(--teal-soft);
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+    }
+
+    .overview-badge .dot {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.45);
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+
+    .overview-summary {
+      margin: 0 0 1rem;
+      font-size: 0.98rem;
+      line-height: 1.55;
+      color: var(--ink-soft);
+      max-width: 52rem;
+    }
+
+    .overview-summary strong { color: var(--ink); font-weight: 600; }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .insight {
+      background: var(--surface-solid);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.85rem 0.95rem;
+      min-height: 100%;
+    }
+
+    .insight-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .insight.win .insight-tag { color: var(--good); }
+    .insight.risk .insight-tag { color: var(--bad); }
+    .insight.watch .insight-tag { color: #a16207; }
+    .insight.action .insight-tag { color: var(--teal-deep); }
+
+    .insight.win { border-top: 2px solid var(--good); }
+    .insight.risk { border-top: 2px solid var(--bad); }
+    .insight.watch { border-top: 2px solid #ca8a04; }
+    .insight.action { border-top: 2px solid var(--teal); }
+
+    .insight p {
+      margin: 0;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+
+    .insight p strong { color: var(--ink); font-weight: 600; }
+
+    .overview-empty {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .improve-block {
+      margin-top: 1.1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .improve-block h3 {
+      margin: 0 0 0.25rem;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .improve-lead {
+      margin: 0 0 0.75rem;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .improve-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .improve-list li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.65rem;
+      align-items: start;
+      background: linear-gradient(135deg, rgba(204, 251, 241, 0.45), rgba(255, 255, 255, 0.9));
+      border: 1px solid #99f6e4;
+      border-radius: 12px;
+      padding: 0.7rem 0.85rem;
+    }
+
+    .improve-num {
+      width: 1.45rem;
+      height: 1.45rem;
+      border-radius: 50%;
+      background: var(--teal);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .improve-list strong {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--ink);
+      margin-bottom: 0.15rem;
+    }
+
+    .improve-list span {
+      font-size: 0.82rem;
+      line-height: 1.4;
+      color: var(--ink-soft);
+    }
+
+    .retail-learn {
+      margin-top: 0.9rem;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.85rem 0.95rem;
+    }
+
+    .retail-learn h4 {
+      margin: 0 0 0.35rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .retail-learn > p {
+      margin: 0 0 0.7rem;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--ink-soft);
+    }
+
+    .retail-learn > p strong { color: var(--ink); }
+
+    .prompt-tips {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .prompt-tips li {
+      border-left: 3px solid var(--teal);
+      background: #f3f7f8;
+      border-radius: 0 10px 10px 0;
+      padding: 0.55rem 0.75rem;
+    }
+
+    .prompt-tips .why {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--teal-deep);
+      margin-bottom: 0.25rem;
+    }
+
+    .prompt-tips code {
+      display: block;
+      font-family: "DM Sans", system-ui, sans-serif;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(15, 118, 110, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(15, 118, 110, 0); }
+    }
+
+    @media (max-width: 900px) {
+      .charts { grid-template-columns: 1fr; }
+      .insight-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .page { width: min(100% - 1.25rem, 1180px); padding-top: 1.5rem; }
+      .hero h1 { font-size: 2.15rem; }
+      .overview-dock {
+        bottom: 1rem;
+        width: calc(100% - 1.25rem);
+      }
+      .btn-overview { width: 100%; text-align: center; }
+      .overview { max-height: min(70vh, 560px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <h1>AI Daily Average</h1>
+      <p>Select a date range to compare lead conversion metrics across portfolio phases — charts and table update together.</p>
+    </header>
+
+    <section class="panel controls" aria-label="Date range controls">
+      <div class="control-block" style="flex: 1 1 280px;">
+        <span class="control-label">Period presets</span>
+        <div class="presets" id="presets"></div>
+        <p class="phase-note" id="phaseNote"></p>
+      </div>
+      <div class="control-block">
+        <span class="control-label">Custom range</span>
+        <div class="range-inputs">
+          <label>From
+            <input type="date" id="dateFrom" />
+          </label>
+          <label>To
+            <input type="date" id="dateTo" />
+          </label>
+          <button type="button" class="btn-apply" id="applyCustom">Apply</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="charts" aria-label="Performance charts">
+      <article class="chart-card">
+        <h2>Volume metrics</h2>
+        <p class="chart-sub">Daily averages — leads, replies, sign-ups, and lost leads</p>
+        <div class="chart-wrap">
+          <canvas id="volumeChart" aria-label="Volume metrics bar chart"></canvas>
+        </div>
+      </article>
+      <article class="chart-card">
+        <h2>Rate trends</h2>
+        <p class="chart-sub">Contact, conversion, and lost-leads rates (%)</p>
+        <div class="chart-wrap">
+          <canvas id="rateChart" aria-label="Rate trends line chart"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel table-panel" aria-label="Metrics table">
+      <h2>Metrics detail</h2>
+      <p class="chart-sub">Values and Variance vs last week · green = favorable · red = unfavorable</p>
+      <div class="table-scroll">
+        <div id="tableRoot"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="overview-dock">
+    <section class="panel overview is-hidden" aria-label="AI analysis overview" id="overviewSection" hidden>
+      <div class="overview-header">
+        <h2>AI overview</h2>
+        <span class="overview-badge"><span class="dot" aria-hidden="true"></span>Analyzed for selected range</span>
+      </div>
+      <div id="overviewRoot"></div>
+    </section>
+    <button type="button" class="btn-overview" id="toggleOverview" aria-expanded="false" aria-controls="overviewSection">
+      Generate AI overview
+    </button>
+  </div>
+
+  <script>
+    const METRICS = [
+      { key: "totalLeads", label: "Total Leads* Count", kind: "count", invert: false },
+      { key: "replied", label: "Replied Cust. Count", kind: "count", invert: false },
+      { key: "contactRate", label: "Contact Rate", kind: "rate", invert: false },
+      { key: "signUps", label: "Sign Ups AI", kind: "count", invert: false },
+      { key: "conversionRate", label: "Conversion Rate", kind: "rate", invert: false },
+      { key: "lostLeads", label: "Lost Leads AI", kind: "count", invert: true },
+      { key: "lostRate", label: "Lost Leads Rate", kind: "rate", invert: true },
+    ];
+
+    const PERIODS = [
+      {
+        id: "p1",
+        start: "2026-06-19",
+        end: "2026-06-25",
+        label: "Jun 19–25",
+        phase: "New All 10Gbps Portfolio",
+        phaseSub: "Spiel more Consultative. No drawer",
+        metrics: {
+          totalLeads: { value: 23, variance: 79, unit: "%", up: true },
+          replied: { value: 17, variance: 96, unit: "%", up: true },
+          contactRate: { value: 74, variance: 11, unit: "ppts", up: true },
+          signUps: { value: 2.9, variance: 10, unit: "%", up: true },
+          conversionRate: { value: 17, variance: 8, unit: "ppts", up: false },
+          lostLeads: { value: 2.0, variance: null, unit: "%", up: null },
+          lostRate: { value: 12, variance: null, unit: "ppts", up: null },
+        },
+      },
+      {
+        id: "p2",
+        start: "2026-06-26",
+        end: "2026-07-05",
+        label: "Jun 26–5 Jul",
+        phase: "New All 10Gbps Portfolio",
+        phaseSub: "Spiel more Consultative. No drawer",
+        metrics: {
+          totalLeads: { value: 20, variance: 11, unit: "%", up: false },
+          replied: { value: 13, variance: 20, unit: "%", up: false },
+          contactRate: { value: 66, variance: 8, unit: "ppts", up: false },
+          signUps: { value: 2.6, variance: 9, unit: "%", up: false },
+          conversionRate: { value: 20, variance: 3, unit: "ppts", up: true },
+          lostLeads: { value: 1.1, variance: 45, unit: "%", up: false },
+          lostRate: { value: 17, variance: 5, unit: "ppts", up: true },
+        },
+      },
+      {
+        id: "p3",
+        start: "2026-07-06",
+        end: "2026-07-19",
+        label: "Jul 6–19",
+        phase: "Start of Retail hand-off",
+        phaseSub: "Duplicate and existing customer",
+        metrics: {
+          totalLeads: { value: 23.1, variance: 19, unit: "%", up: true },
+          replied: { value: 16.8, variance: 30, unit: "%", up: true },
+          contactRate: { value: 72.8, variance: 6.3, unit: "ppts", up: true },
+          signUps: { value: 1.3, variance: 50, unit: "%", up: false },
+          conversionRate: { value: 7.7, variance: 12.4, unit: "ppts", up: false },
+          lostLeads: { value: 2.4, variance: 118, unit: "%", up: true },
+          lostRate: { value: 15, variance: 2, unit: "ppts", up: false },
+        },
+      },
+    ];
+
+    const PRESETS = [
+      { id: "all", label: "All periods", from: "2026-06-19", to: "2026-07-19" },
+      { id: "p1", label: "Jun 19–25", from: "2026-06-19", to: "2026-06-25" },
+      { id: "p2", label: "Jun 26–Jul 5", from: "2026-06-26", to: "2026-07-05" },
+      { id: "portfolio", label: "10Gbps Portfolio", from: "2026-06-19", to: "2026-07-05" },
+      { id: "retail", label: "Retail hand-off", from: "2026-07-06", to: "2026-07-19" },
+    ];
+
+    const VOLUME_KEYS = ["totalLeads", "replied", "signUps", "lostLeads"];
+    const RATE_KEYS = ["contactRate", "conversionRate", "lostRate"];
+    const COLORS = {
+      totalLeads: "#0f766e",
+      replied: "#0ea5e9",
+      signUps: "#ca8a04",
+      lostLeads: "#dc2626",
+      contactRate: "#0f766e",
+      conversionRate: "#0369a1",
+      lostRate: "#be123c",
+    };
+
+    let activePreset = "all";
+    let rangeFrom = "2026-06-19";
+    let rangeTo = "2026-07-19";
+    let volumeChart = null;
+    let rateChart = null;
+
+    function parseDate(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function overlaps(period, from, to) {
+      const pStart = parseDate(period.start);
+      const pEnd = parseDate(period.end);
+      const rStart = parseDate(from);
+      const rEnd = parseDate(to);
+      return pStart <= rEnd && pEnd >= rStart;
+    }
+
+    function filterPeriods(from, to) {
+      return PERIODS.filter((p) => overlaps(p, from, to));
+    }
+
+    function formatValue(metricDef, cell) {
+      if (metricDef.kind === "rate") {
+        const v = cell.value;
+        return Number.isInteger(v) ? `${v}%` : `${v}%`;
+      }
+      return Number.isInteger(cell.value) ? String(cell.value) : String(cell.value);
+    }
+
+    function isFavorable(metricDef, cell) {
+      if (cell.variance == null || cell.up == null) return null;
+      if (metricDef.invert) return !cell.up;
+      return cell.up;
+    }
+
+    function varianceLabel(cell) {
+      if (cell.variance == null) return "N/A";
+      const sign = cell.up ? "+" : "−";
+      const unit = cell.unit === "ppts" ? "ppts" : "%";
+      const v = cell.variance;
+      const num = Number.isInteger(v) ? v : v;
+      return `${sign}${num}${unit === "ppts" ? "ppts" : "%"}`;
+    }
+
+    function renderVariancePill(metricDef, cell) {
+      if (cell.variance == null) {
+        return `<span class="var-pill na">N/A</span>`;
+      }
+      const good = isFavorable(metricDef, cell);
+      const cls = good ? "good" : "bad";
+      const arrow = cell.up ? "▲" : "▼";
+      return `<span class="var-pill ${cls}"><span class="arrow" aria-hidden="true">${arrow}</span>${varianceLabel(cell)}</span>`;
+    }
+
+    function phaseGroups(periods) {
+      const groups = [];
+      periods.forEach((p) => {
+        const last = groups[groups.length - 1];
+        if (last && last.phase === p.phase && last.phaseSub === p.phaseSub) {
+          last.span += 2;
+          last.periods.push(p);
+        } else {
+          groups.push({ phase: p.phase, phaseSub: p.phaseSub, span: 2, periods: [p] });
+        }
+      });
+      return groups;
+    }
+
+    function renderTable(periods) {
+      const root = document.getElementById("tableRoot");
+
+      if (!periods.length) {
+        root.innerHTML = `<div class="empty-state">No periods overlap the selected date range.</div>`;
+        return;
+      }
+
+      const groups = phaseGroups(periods);
+
+      let phaseRow = `<th rowspan="3">Metric</th>`;
+      groups.forEach((g) => {
+        phaseRow += `<th colspan="${g.span}">${g.phase}<span class="phase-sub">${g.phaseSub}</span></th>`;
+      });
+
+      let dateRow = "";
+      periods.forEach((p) => {
+        dateRow += `<th colspan="2">${p.label}</th>`;
+      });
+
+      let subRow = "";
+      periods.forEach(() => {
+        subRow += `<th>Value</th><th>Variance, LW</th>`;
+      });
+
+      let body = "";
+      METRICS.forEach((m) => {
+        body += `<tr><td>${m.label}</td>`;
+        periods.forEach((p) => {
+          const cell = p.metrics[m.key];
+          body += `<td><div class="cell-stack"><span class="metric-value">${formatValue(m, cell)}</span></div></td>`;
+          body += `<td><div class="cell-stack">${renderVariancePill(m, cell)}</div></td>`;
+        });
+        body += `</tr>`;
+      });
+
+      root.innerHTML = `
+        <table class="metrics">
+          <thead>
+            <tr class="phase">${phaseRow}</tr>
+            <tr class="dates">${dateRow}</tr>
+            <tr class="subhead">${subRow}</tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      `;
+    }
+
+    function chartLabels(periods) {
+      return periods.map((p) => p.label);
+    }
+
+    function destroyCharts() {
+      if (volumeChart) { volumeChart.destroy(); volumeChart = null; }
+      if (rateChart) { rateChart.destroy(); rateChart = null; }
+    }
+
+    function renderCharts(periods) {
+      destroyCharts();
+      const labels = chartLabels(periods);
+      const empty = !periods.length;
+
+      const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              boxWidth: 12,
+              boxHeight: 12,
+              usePointStyle: true,
+              pointStyle: "circle",
+              font: { family: "'DM Sans', sans-serif", size: 11 },
+              color: "#3d4f5c",
+              padding: 14,
+            },
+          },
+          tooltip: {
+            backgroundColor: "#14212b",
+            titleFont: { family: "'DM Sans', sans-serif", size: 12 },
+            bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
+            padding: 10,
+            cornerRadius: 8,
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: "'DM Sans', sans-serif", size: 11 }, color: "#6b7c88" },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(213, 221, 227, 0.9)" },
+            border: { display: false },
+            ticks: { font: { family: "'DM Sans', sans-serif", size: 11 }, color: "#6b7c88" },
+          },
+        },
+        animation: { duration: 650, easing: "easeOutQuart" },
+      };
+
+      const volumeCtx = document.getElementById("volumeChart");
+      volumeChart = new Chart(volumeCtx, {
+        type: "bar",
+        data: {
+          labels: empty ? ["No data"] : labels,
+          datasets: empty
+            ? []
+            : VOLUME_KEYS.map((key) => {
+                const def = METRICS.find((m) => m.key === key);
+                return {
+                  label: def.label.replace(" Count", "").replace(" AI", ""),
+                  data: periods.map((p) => p.metrics[key].value),
+                  backgroundColor: COLORS[key],
+                  borderRadius: 6,
+                  maxBarThickness: 28,
+                };
+              }),
+        },
+        options: {
+          ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            legend: { ...commonOptions.plugins.legend },
+          },
+        },
+      });
+
+      const rateCtx = document.getElementById("rateChart");
+      rateChart = new Chart(rateCtx, {
+        type: "line",
+        data: {
+          labels: empty ? ["No data"] : labels,
+          datasets: empty
+            ? []
+            : RATE_KEYS.map((key) => {
+                const def = METRICS.find((m) => m.key === key);
+                return {
+                  label: def.label,
+                  data: periods.map((p) => p.metrics[key].value),
+                  borderColor: COLORS[key],
+                  backgroundColor: COLORS[key] + "22",
+                  tension: 0.35,
+                  fill: false,
+                  pointRadius: 5,
+                  pointHoverRadius: 7,
+                  pointBackgroundColor: "#fff",
+                  pointBorderWidth: 2,
+                  borderWidth: 2.5,
+                };
+              }),
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            ...commonOptions.scales,
+            y: {
+              ...commonOptions.scales.y,
+              ticks: {
+                ...commonOptions.scales.y.ticks,
+                callback: (v) => `${v}%`,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    function updatePhaseNote(periods) {
+      const el = document.getElementById("phaseNote");
+      if (!periods.length) {
+        el.innerHTML = "No overlapping report periods for this range.";
+        return;
+      }
+      const phases = [...new Set(periods.map((p) => p.phase))];
+      el.innerHTML = `Showing <strong>${periods.length}</strong> period${periods.length > 1 ? "s" : ""} · ${phases.join(" · ")}`;
+    }
+
+    function fmtNum(v) {
+      return Number.isInteger(v) ? String(v) : String(v);
+    }
+
+    function deltaText(first, last, key, kind) {
+      const a = first.metrics[key].value;
+      const b = last.metrics[key].value;
+      const diff = +(b - a).toFixed(1);
+      if (diff === 0) return { diff: 0, label: "unchanged" };
+      const sign = diff > 0 ? "+" : "";
+      const unit = kind === "rate" ? "ppts" : "";
+      return {
+        diff,
+        label: `${sign}${diff}${unit}`,
+        improved: METRICS.find((m) => m.key === key).invert ? diff < 0 : diff > 0,
+      };
+    }
+
+    function buildOverview(periods) {
+      if (!periods.length) {
+        return {
+          summary: "No report periods overlap this date range, so there is nothing to analyze yet.",
+          insights: [],
+          improvements: [],
+        };
+      }
+
+      const first = periods[0];
+      const last = periods[periods.length - 1];
+      const phases = [...new Set(periods.map((p) => p.phase))];
+      const multi = periods.length > 1;
+      const insights = [];
+
+      if (multi) {
+        const conv = deltaText(first, last, "conversionRate", "rate");
+        const signUps = deltaText(first, last, "signUps", "count");
+        const contact = deltaText(first, last, "contactRate", "rate");
+        const leads = deltaText(first, last, "totalLeads", "count");
+        const lost = deltaText(first, last, "lostLeads", "count");
+
+        const summary =
+          `Across <strong>${first.label}</strong> to <strong>${last.label}</strong> (${phases.join(" → ")}), ` +
+          `AI conversion moved from <strong>${fmtNum(first.metrics.conversionRate.value)}%</strong> to ` +
+          `<strong>${fmtNum(last.metrics.conversionRate.value)}%</strong> (${conv.label}), while Sign Ups AI ` +
+          `went from <strong>${fmtNum(first.metrics.signUps.value)}</strong> to ` +
+          `<strong>${fmtNum(last.metrics.signUps.value)}</strong> (${signUps.label}). ` +
+          (conv.diff < 0 || signUps.diff < 0
+            ? "The main story is softer AI close-out despite stable lead intake."
+            : "Overall conversion posture looks constructive in this window.");
+
+        if (contact.diff > 0 || leads.diff >= 0) {
+          insights.push({
+            type: "win",
+            tag: "Strength",
+            text:
+              `Lead engagement held up: Contact Rate is <strong>${fmtNum(last.metrics.contactRate.value)}%</strong>` +
+              (contact.diff ? ` (${contact.label} vs first period)` : "") +
+              ` with Total Leads at <strong>${fmtNum(last.metrics.totalLeads.value)}</strong>.`,
+          });
+        }
+
+        if (conv.diff < 0 || signUps.diff < 0) {
+          insights.push({
+            type: "risk",
+            tag: "Risk",
+            text:
+              `AI close metrics weakened — Conversion Rate <strong>${fmtNum(last.metrics.conversionRate.value)}%</strong> ` +
+              `and Sign Ups AI <strong>${fmtNum(last.metrics.signUps.value)}</strong>. ` +
+              `Investigate hand-off quality and duplicate/existing-customer mix.`,
+          });
+        } else {
+          insights.push({
+            type: "win",
+            tag: "Conversion",
+            text:
+              `Sign-ups and conversion are holding or improving versus the start of the range. ` +
+              `Keep the current spiel and routing rules that support this.`,
+          });
+        }
+
+        if (lost.diff > 0) {
+          insights.push({
+            type: "watch",
+            tag: "Watch",
+            text:
+              `Lost Leads AI rose to <strong>${fmtNum(last.metrics.lostLeads.value)}</strong> (${lost.label}). ` +
+              `Lost Leads Rate is <strong>${fmtNum(last.metrics.lostRate.value)}%</strong> — monitor recovery paths.`,
+          });
+        } else {
+          insights.push({
+            type: "action",
+            tag: "Next step",
+            text:
+              `Use this range as a baseline: compare Contact Rate (${fmtNum(last.metrics.contactRate.value)}%) ` +
+              `against Conversion Rate (${fmtNum(last.metrics.conversionRate.value)}%) weekly to catch funnel slip early.`,
+          });
+        }
+
+        if (phases.some((p) => p.includes("Retail"))) {
+          insights[insights.length - 1] = {
+            type: "action",
+            tag: "Next step",
+            text:
+              `Retail hand-off is in view. Align AI and Retail on duplicate/existing customers so fallout ` +
+              `after AI contact can be recovered without dropping reported Sign Ups and Conversion.`,
+          };
+        }
+
+        return {
+          summary,
+          insights: insights.slice(0, 3),
+          improvements: buildConversionImprovements(periods),
+        };
+      }
+
+      // Single period
+      const p = first;
+      const m = p.metrics;
+      const favorable = METRICS.filter((def) => isFavorable(def, m[def.key]) === true).length;
+      const unfavorable = METRICS.filter((def) => isFavorable(def, m[def.key]) === false).length;
+
+      const summary =
+        `For <strong>${p.label}</strong> under <strong>${p.phase}</strong> (${p.phaseSub}), ` +
+        `daily averages show <strong>${fmtNum(m.totalLeads.value)}</strong> leads, ` +
+        `<strong>${fmtNum(m.contactRate.value)}%</strong> contact rate, ` +
+        `<strong>${fmtNum(m.signUps.value)}</strong> AI sign-ups, and ` +
+        `<strong>${fmtNum(m.conversionRate.value)}%</strong> conversion. ` +
+        `Variance vs last week: <strong>${favorable}</strong> favorable / <strong>${unfavorable}</strong> unfavorable signals.`;
+
+      if (isFavorable(METRICS.find((x) => x.key === "contactRate"), m.contactRate)) {
+        insights.push({
+          type: "win",
+          tag: "Strength",
+          text: `Contact Rate at <strong>${fmtNum(m.contactRate.value)}%</strong> is a favorable move — outreach quality is supporting replies.`,
+        });
+      } else {
+        insights.push({
+          type: "watch",
+          tag: "Watch",
+          text: `Contact Rate at <strong>${fmtNum(m.contactRate.value)}%</strong> softened vs last week — check spiel and response timing.`,
+        });
+      }
+
+      if (isFavorable(METRICS.find((x) => x.key === "conversionRate"), m.conversionRate) === false ||
+          isFavorable(METRICS.find((x) => x.key === "signUps"), m.signUps) === false) {
+        insights.push({
+          type: "risk",
+          tag: "Risk",
+          text:
+            `Close-out pressure: Sign Ups AI <strong>${fmtNum(m.signUps.value)}</strong> and Conversion ` +
+            `<strong>${fmtNum(m.conversionRate.value)}%</strong> need attention this period.`,
+        });
+      } else {
+        insights.push({
+          type: "win",
+          tag: "Conversion",
+          text:
+            `Conversion at <strong>${fmtNum(m.conversionRate.value)}%</strong> with ` +
+            `<strong>${fmtNum(m.signUps.value)}</strong> AI sign-ups looks healthy for this window.`,
+        });
+      }
+
+      insights.push({
+        type: "action",
+        tag: "Next step",
+        text:
+          p.phase.includes("Retail")
+            ? `Focus on Retail hand-off continuity for duplicate/existing customers while protecting AI conversion reporting.`
+            : `Protect consultative spiel consistency and re-check any drawer/routing changes that could dilute conversion.`,
+      });
+
+      return {
+        summary,
+        insights,
+        improvements: buildConversionImprovements(periods),
+      };
+    }
+
+    function buildConversionImprovements(periods) {
+      const last = periods[periods.length - 1];
+      const first = periods[0];
+      const m = last.metrics;
+      const multi = periods.length > 1;
+      const convLow = m.conversionRate.value < 12;
+      const signUpsSoft = m.signUps.value < 2;
+      const lostHigh = m.lostLeads.value >= 2 || m.lostRate.value >= 14;
+      const contactStrong = m.contactRate.value >= 70;
+      const convDrop = multi
+        ? last.metrics.conversionRate.value - first.metrics.conversionRate.value
+        : 0;
+
+      const items = [];
+
+      items.push({
+        title: contactStrong && (convLow || signUpsSoft)
+          ? "Close more of the customers AI already contacts"
+          : "Tighten AI close asks after reply",
+        detail: contactStrong
+          ? `Contact Rate is strong at <strong>${fmtNum(m.contactRate.value)}%</strong>, but Sign Ups AI is only <strong>${fmtNum(m.signUps.value)}</strong> and Conversion <strong>${fmtNum(m.conversionRate.value)}%</strong>. Improve the post-reply close: clearer offer, urgency, and next-step CTA so more replied customers become AI sign-ups.`
+          : `Raise both reach and close quality — ask for the sign-up decision sooner after a positive reply, with a simple plan recommendation and one clear CTA.`,
+      });
+
+      items.push({
+        title: convLow || convDrop < 0
+          ? "Strengthen AI consultative spiel to lift conversion"
+          : "Keep optimizing the winning spiel",
+        detail: convDrop < 0
+          ? `Conversion fell from <strong>${fmtNum(first.metrics.conversionRate.value)}%</strong> to <strong>${fmtNum(m.conversionRate.value)}%</strong>. Refresh AI scripts for objections (price, speed, existing plan) and A/B test consultative vs promotional wording to recover close rate.`
+          : `Conversion sits at <strong>${fmtNum(m.conversionRate.value)}%</strong>. Keep refining objection handling and plan matching so AI converts a higher share of contacted leads.`,
+      });
+
+      items.push({
+        title: lostHigh ? "Reduce AI lost leads before they drop" : "Prevent mid-funnel drop-offs in AI chat",
+        detail: lostHigh
+          ? `Lost Leads AI is <strong>${fmtNum(m.lostLeads.value)}</strong> (rate <strong>${fmtNum(m.lostRate.value)}%</strong>). Add same-session recovery prompts, follow-up sequences, and clearer value proof when customers hesitate — convert them inside AI instead of letting them go cold.`
+          : `Add timed follow-ups and value reminders for hesitant replies so fewer warm leads stall before sign-up.`,
+      });
+
+      items.push({
+        title: "Prioritize high-intent leads for AI close effort",
+        detail: signUpsSoft
+          ? `With Sign Ups AI at <strong>${fmtNum(m.signUps.value)}</strong>, score intent (timeline, plan interest, eligibility) and put AI close energy on the hottest replies first — fewer shallow chats, more completed conversions.`
+          : `Use intent scoring so AI spends more turns on leads most likely to sign up, and keep light nurture for lower-intent replies.`,
+      });
+
+      const retailPeriod = periods.find((p) => p.phase.includes("Retail")) || last;
+      const rm = retailPeriod.metrics;
+      const retailLearn = {
+        summary:
+          `During Retail hand-off (<strong>${retailPeriod.label}</strong>), AI Sign Ups dropped to ` +
+          `<strong>${fmtNum(rm.signUps.value)}</strong> and Conversion to <strong>${fmtNum(rm.conversionRate.value)}%</strong>, ` +
+          `while Contact Rate stayed relatively healthy at <strong>${fmtNum(rm.contactRate.value)}%</strong>. ` +
+          `Retail converted the fallout AI did not finish — especially <strong>duplicate and existing customers</strong> — ` +
+          `by clarifying account status, matching the right plan, and closing the same leads AI had already engaged.`,
+        prompts: [
+          {
+            why: "Retail win → AI prompt: own the existing/duplicate customer path",
+            text: "If the customer is an existing or duplicate account, do not stop at a soft hand-off. Confirm account status, explain upgrade/retention options clearly, and ask for a sign-up decision in the same conversation.",
+          },
+          {
+            why: "Retail win → AI prompt: recover hesitant fallout before losing the lead",
+            text: "When a customer hesitates after contact, treat it as a recoverable close: restate the value, handle price/speed/existing-plan objections, offer one best-fit plan, and ask a direct close question before marking the lead lost.",
+          },
+          {
+            why: "Retail win → AI prompt: consultative close, not just contact",
+            text: "After a reply, act like a Retail closer: diagnose need, recommend one plan, remove friction (eligibility, install, billing), and use a clear CTA — “Shall I proceed with your sign-up now?”",
+          },
+          {
+            why: "Retail win → AI prompt: keep context and finish the sale",
+            text: "Never restart discovery if intent is already known. Reuse what the customer said (speed need, budget, existing plan), personalize the offer, and complete conversion in-chat whenever the customer is eligible.",
+          },
+        ],
+      };
+
+      return { items, retailLearn };
+    }
+
+    function renderOverview(periods) {
+      const root = document.getElementById("overviewRoot");
+      const { summary, insights, improvements } = buildOverview(periods);
+
+      if (!insights.length) {
+        root.innerHTML = `<p class="overview-empty">${summary}</p>`;
+        return;
+      }
+
+      const items = improvements?.items || [];
+      const retailLearn = improvements?.retailLearn;
+
+      const improveHtml = items.length
+        ? `
+        <div class="improve-block">
+          <h3>How AI can convert more customers</h3>
+          <p class="improve-lead">Actions to raise AI Sign Ups and Conversion Rate — using what Retail already proves converts.</p>
+          <ol class="improve-list">
+            ${items
+              .map(
+                (item, idx) => `
+              <li>
+                <span class="improve-num">${idx + 1}</span>
+                <div>
+                  <strong>${item.title}</strong>
+                  <span>${item.detail}</span>
+                </div>
+              </li>`
+              )
+              .join("")}
+          </ol>
+          ${
+            retailLearn
+              ? `
+          <div class="retail-learn">
+            <h4>What Retail did that converted customers</h4>
+            <p>${retailLearn.summary}</p>
+            <h4>Implement in the AI prompt</h4>
+            <ul class="prompt-tips">
+              ${retailLearn.prompts
+                .map(
+                  (p) => `
+                <li>
+                  <span class="why">${p.why}</span>
+                  <code>${p.text}</code>
+                </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`
+              : ""
+          }
+        </div>`
+        : "";
+
+      root.innerHTML = `
+        <p class="overview-summary">${summary}</p>
+        <div class="insight-grid">
+          ${insights
+            .map(
+              (i) => `
+            <article class="insight ${i.type}">
+              <span class="insight-tag">${i.tag}</span>
+              <p>${i.text}</p>
+            </article>`
+            )
+            .join("")}
+        </div>
+        ${improveHtml}
+      `;
+    }
+
+    function syncDateInputs() {
+      document.getElementById("dateFrom").value = rangeFrom;
+      document.getElementById("dateTo").value = rangeTo;
+    }
+
+    function setActivePreset(id) {
+      activePreset = id;
+      document.querySelectorAll(".preset").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.id === id);
+      });
+    }
+
+    function applyRange(from, to, presetId) {
+      if (parseDate(from) > parseDate(to)) {
+        [from, to] = [to, from];
+      }
+      rangeFrom = from;
+      rangeTo = to;
+      syncDateInputs();
+      setActivePreset(presetId || "custom");
+      const periods = filterPeriods(rangeFrom, rangeTo);
+      updatePhaseNote(periods);
+      renderOverview(periods);
+      renderCharts(periods);
+      renderTable(periods);
+    }
+
+    function renderPresets() {
+      const host = document.getElementById("presets");
+      host.innerHTML = PRESETS.map(
+        (p) => `<button type="button" class="preset" data-id="${p.id}" data-from="${p.from}" data-to="${p.to}">${p.label}</button>`
+      ).join("");
+      host.addEventListener("click", (e) => {
+        const btn = e.target.closest(".preset");
+        if (!btn) return;
+        applyRange(btn.dataset.from, btn.dataset.to, btn.dataset.id);
+      });
+    }
+
+    function setOverviewVisible(visible) {
+      const section = document.getElementById("overviewSection");
+      const btn = document.getElementById("toggleOverview");
+      section.classList.toggle("is-hidden", !visible);
+      section.hidden = !visible;
+      btn.classList.toggle("is-open", visible);
+      btn.setAttribute("aria-expanded", String(visible));
+      btn.textContent = visible ? "Hide AI overview" : "Generate AI overview";
+    }
+
+    function init() {
+      renderPresets();
+      document.getElementById("applyCustom").addEventListener("click", () => {
+        const from = document.getElementById("dateFrom").value;
+        const to = document.getElementById("dateTo").value;
+        if (!from || !to) return;
+        applyRange(from, to, "custom");
+      });
+      document.getElementById("toggleOverview").addEventListener("click", () => {
+        const section = document.getElementById("overviewSection");
+        const willShow = section.hidden || section.classList.contains("is-hidden");
+        if (willShow) {
+          const periods = filterPeriods(rangeFrom, rangeTo);
+          renderOverview(periods);
+        }
+        setOverviewVisible(willShow);
+      });
+      applyRange(rangeFrom, rangeTo, "all");
+      setOverviewVisible(false);
+    }
+
+    init();
+  </script>
+</body>
+</html>
