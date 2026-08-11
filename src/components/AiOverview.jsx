@@ -1,9 +1,48 @@
+import { useEffect, useState } from "react";
+import { getOverview } from "../api/client";
 import { buildOverview } from "../lib/analysis";
 
-export default function AiOverview({ periods, open, onToggle }) {
-  const overview = buildOverview(periods);
-  const items = overview.improvements?.items || [];
-  const retailLearn = overview.improvements?.retailLearn;
+export default function AiOverview({
+  periods,
+  metrics,
+  rangeFrom,
+  rangeTo,
+  open,
+  onToggle,
+}) {
+  const [overview, setOverview] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const result = await getOverview(rangeFrom, rangeTo);
+        if (cancelled) return;
+        if (result.data) {
+          setOverview(result.data);
+        } else {
+          setOverview(buildOverview(periods, metrics));
+        }
+      } catch {
+        if (!cancelled) setOverview(buildOverview(periods, metrics));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, rangeFrom, rangeTo, periods, metrics]);
+
+  const items = overview?.improvements?.items || [];
+  const retailLearn = overview?.improvements?.retailLearn;
 
   return (
     <div className="overview-dock">
@@ -17,7 +56,9 @@ export default function AiOverview({ periods, open, onToggle }) {
             </span>
           </div>
 
-          {!overview.insights.length ? (
+          {loading || !overview ? (
+            <p className="overview-empty">Generating overview…</p>
+          ) : !overview.insights?.length ? (
             <p className="overview-empty">{overview.summary}</p>
           ) : (
             <>

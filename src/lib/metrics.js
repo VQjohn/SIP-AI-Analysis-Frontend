@@ -1,5 +1,3 @@
-import { METRICS, PERIODS } from "../data/reportData";
-
 export function parseDate(iso) {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -13,8 +11,9 @@ export function overlaps(period, from, to) {
   return pStart <= rEnd && pEnd >= rStart;
 }
 
-export function filterPeriods(from, to) {
-  return PERIODS.filter((p) => overlaps(p, from, to));
+export function filterPeriods(from, to, periods = []) {
+  if (!from || !to) return periods;
+  return periods.filter((p) => overlaps(p, from, to));
 }
 
 export function formatValue(metricDef, cell) {
@@ -53,17 +52,18 @@ export function fmtNum(v) {
   return String(v);
 }
 
-export function deltaText(first, last, key, kind) {
+export function deltaText(first, last, key, kind, metricsDefs = []) {
   const a = first.metrics[key].value;
   const b = last.metrics[key].value;
   const diff = +(b - a).toFixed(1);
   if (diff === 0) return { diff: 0, label: "unchanged" };
   const sign = diff > 0 ? "+" : "";
   const unit = kind === "rate" ? "ppts" : "";
+  const def = metricsDefs.find((m) => m.key === key);
   return {
     diff,
     label: `${sign}${diff}${unit}`,
-    improved: METRICS.find((m) => m.key === key).invert ? diff < 0 : diff > 0,
+    improved: def?.invert ? diff < 0 : diff > 0,
   };
 }
 

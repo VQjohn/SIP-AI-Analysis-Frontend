@@ -1,0 +1,65 @@
+{
+  "from": "2026-06-19",
+  "to": "2026-07-19",
+  "overview": {
+    "summary": "Across <strong>Jun 19–25</strong> to <strong>Jul 6–19</strong> (New All 10Gbps Portfolio → Start of Retail hand-off), AI conversion moved from <strong>17%</strong> to <strong>7.7%</strong> (-9.3ppts), while Sign Ups AI went from <strong>2.9</strong> to <strong>1.3</strong> (-1.6). The main story is softer AI close-out despite stable lead intake.",
+    "insights": [
+      {
+        "type": "win",
+        "tag": "Strength",
+        "text": "Lead engagement held up: Contact Rate is <strong>72.8%</strong> (-1.2ppts vs first period) with Total Leads at <strong>23.1</strong>."
+      },
+      {
+        "type": "risk",
+        "tag": "Risk",
+        "text": "AI close metrics weakened — Conversion Rate <strong>7.7%</strong> and Sign Ups AI <strong>1.3</strong>. Investigate hand-off quality and duplicate/existing-customer mix."
+      },
+      {
+        "type": "action",
+        "tag": "Next step",
+        "text": "Retail hand-off is in view. Align AI and Retail on duplicate/existing customers so fallout after AI contact can be recovered without dropping reported Sign Ups and Conversion."
+      }
+    ],
+    "improvements": {
+      "items": [
+        {
+          "title": "Close more of the customers AI already contacts",
+          "detail": "Contact Rate is strong at <strong>72.8%</strong>, but Sign Ups AI is only <strong>1.3</strong> and Conversion <strong>7.7%</strong>. Improve the post-reply close: clearer offer, urgency, and next-step CTA so more replied customers become AI sign-ups."
+        },
+        {
+          "title": "Strengthen AI consultative spiel to lift conversion",
+          "detail": "Conversion fell from <strong>17%</strong> to <strong>7.7%</strong>. Refresh AI scripts for objections (price, speed, existing plan) and A/B test consultative vs promotional wording to recover close rate."
+        },
+        {
+          "title": "Reduce AI lost leads before they drop",
+          "detail": "Lost Leads AI is <strong>2.4</strong> (rate <strong>15%</strong>). Add same-session recovery prompts, follow-up sequences, and clearer value proof when customers hesitate — convert them inside AI instead of letting them go cold."
+        },
+        {
+          "title": "Prioritize high-intent leads for AI close effort",
+          "detail": "With Sign Ups AI at <strong>1.3</strong>, score intent (timeline, plan interest, eligibility) and put AI close energy on the hottest replies first — fewer shallow chats, more completed conversions."
+        }
+      ],
+      "retailLearn": {
+        "summary": "During Retail hand-off (<strong>Jul 6–19</strong>), AI Sign Ups dropped to <strong>1.3</strong> and Conversion to <strong>7.7%</strong>, while Contact Rate stayed relatively healthy at <strong>72.8%</strong>. Retail converted the fallout AI did not finish — especially <strong>duplicate and existing customers</strong> — by clarifying account status, matching the right plan, and closing the same leads AI had already engaged.",
+        "prompts": [
+          {
+            "why": "Retail win → AI prompt: own the existing/duplicate customer path",
+            "text": "If the customer is an existing or duplicate account, do not stop at a soft hand-off. Confirm account status, explain upgrade/retention options clearly, and ask for a sign-up decision in the same conversation."
+          },
+          {
+            "why": "Retail win → AI prompt: recover hesitant fallout before losing the lead",
+            "text": "When a customer hesitates after contact, treat it as a recoverable close: restate the value, handle price/speed/existing-plan objections, offer one best-fit plan, and ask a direct close question before marking the lead lost."
+          },
+          {
+            "why": "Retail win → AI prompt: consultative close, not just contact",
+            "text": "After a reply, act like a Retail closer: diagnose need, recommend one plan, remove friction (eligibility, install, billing), and use a clear CTA — \"Shall I proceed with your sign-up now?\""
+          },
+          {
+            "why": "Retail win → AI prompt: keep context and finish the sale",
+            "text": "Never restart discovery if intent is already known. Reuse what the customer said (speed need, budget, existing plan), personalize the offer, and complete conversion in-chat whenever the customer is eligible."
+          }
+        ]
+      }
+    }
+  }
+}

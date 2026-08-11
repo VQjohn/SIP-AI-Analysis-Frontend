@@ -1,5 +1,9 @@
-import { METRICS } from "../data/reportData";
+import { DEFAULT_META } from "../data/reportData";
 import { deltaText, fmtNum, isFavorable } from "./metrics";
+
+function metricDefs(metrics) {
+  return metrics?.length ? metrics : DEFAULT_META.metrics;
+}
 
 export function buildConversionImprovements(periods) {
   const last = periods[periods.length - 1];
@@ -85,7 +89,9 @@ export function buildConversionImprovements(periods) {
   return { items, retailLearn };
 }
 
-export function buildOverview(periods) {
+export function buildOverview(periods, metrics = []) {
+  const METRICS = metricDefs(metrics);
+
   if (!periods.length) {
     return {
       summary: "No report periods overlap this date range, so there is nothing to analyze yet.",
@@ -101,11 +107,11 @@ export function buildOverview(periods) {
   const insights = [];
 
   if (multi) {
-    const conv = deltaText(first, last, "conversionRate", "rate");
-    const signUps = deltaText(first, last, "signUps", "count");
-    const contact = deltaText(first, last, "contactRate", "rate");
-    const leads = deltaText(first, last, "totalLeads", "count");
-    const lost = deltaText(first, last, "lostLeads", "count");
+    const conv = deltaText(first, last, "conversionRate", "rate", METRICS);
+    const signUps = deltaText(first, last, "signUps", "count", METRICS);
+    const contact = deltaText(first, last, "contactRate", "rate", METRICS);
+    const leads = deltaText(first, last, "totalLeads", "count", METRICS);
+    const lost = deltaText(first, last, "lostLeads", "count", METRICS);
 
     const summary =
       `Across <strong>${first.label}</strong> to <strong>${last.label}</strong> (${phases.join(" → ")}), ` +

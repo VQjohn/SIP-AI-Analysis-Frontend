@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { METRICS } from "../data/reportData";
+import { DEFAULT_META } from "../data/reportData";
 import {
   formatValue,
   isFavorable,
@@ -24,7 +24,7 @@ function VariancePill({ metricDef, cell }) {
   );
 }
 
-export default function MetricsTable({ periods }) {
+export default function MetricsTable({ periods, metrics = DEFAULT_META.metrics }) {
   if (!periods.length) {
     return (
       <section className="panel table-panel" aria-label="Metrics table">
@@ -74,11 +74,19 @@ export default function MetricsTable({ periods }) {
             </tr>
           </thead>
           <tbody>
-            {METRICS.map((m) => (
+            {metrics.map((m) => (
               <tr key={m.key}>
                 <td>{m.label}</td>
                 {periods.map((p) => {
                   const cell = p.metrics[m.key];
+                  if (!cell) {
+                    return (
+                      <Fragment key={`${p.id}-${m.key}`}>
+                        <td>—</td>
+                        <td>—</td>
+                      </Fragment>
+                    );
+                  }
                   return (
                     <Fragment key={`${p.id}-${m.key}`}>
                       <td>

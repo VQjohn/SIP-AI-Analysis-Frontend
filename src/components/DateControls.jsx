@@ -1,6 +1,5 @@
-import { PRESETS } from "../data/reportData";
-
 export default function DateControls({
+  presets = [],
   activePreset,
   rangeFrom,
   rangeTo,
@@ -15,7 +14,7 @@ export default function DateControls({
       <div className="control-block" style={{ flex: "1 1 280px" }}>
         <span className="control-label">Period presets</span>
         <div className="presets">
-          {PRESETS.map((p) => (
+          {presets.map((p) => (
             <button
               key={p.id}
               type="button"

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
-import { COLORS, METRICS, RATE_KEYS, VOLUME_KEYS } from "../data/reportData";
+import { DEFAULT_META } from "../data/reportData";
 
 const commonOptions = {
   responsive: true,
@@ -42,7 +42,13 @@ const commonOptions = {
   animation: { duration: 650, easing: "easeOutQuart" },
 };
 
-export default function PerformanceCharts({ periods }) {
+export default function PerformanceCharts({
+  periods,
+  metrics = DEFAULT_META.metrics,
+  volumeKeys = DEFAULT_META.volumeKeys,
+  rateKeys = DEFAULT_META.rateKeys,
+  colors = DEFAULT_META.colors,
+}) {
   const volumeRef = useRef(null);
   const rateRef = useRef(null);
   const volumeChart = useRef(null);
@@ -61,12 +67,12 @@ export default function PerformanceCharts({ periods }) {
         labels: empty ? ["No data"] : labels,
         datasets: empty
           ? []
-          : VOLUME_KEYS.map((key) => {
-              const def = METRICS.find((m) => m.key === key);
+          : volumeKeys.map((key) => {
+              const def = metrics.find((m) => m.key === key) || { label: key };
               return {
                 label: def.label.replace(" Count", "").replace(" AI", ""),
-                data: periods.map((p) => p.metrics[key].value),
-                backgroundColor: COLORS[key],
+                data: periods.map((p) => p.metrics[key]?.value ?? 0),
+                backgroundColor: colors[key],
                 borderRadius: 6,
                 maxBarThickness: 28,
               };
@@ -81,13 +87,13 @@ export default function PerformanceCharts({ periods }) {
         labels: empty ? ["No data"] : labels,
         datasets: empty
           ? []
-          : RATE_KEYS.map((key) => {
-              const def = METRICS.find((m) => m.key === key);
+          : rateKeys.map((key) => {
+              const def = metrics.find((m) => m.key === key) || { label: key };
               return {
                 label: def.label,
-                data: periods.map((p) => p.metrics[key].value),
-                borderColor: COLORS[key],
-                backgroundColor: `${COLORS[key]}22`,
+                data: periods.map((p) => p.metrics[key]?.value ?? 0),
+                borderColor: colors[key],
+                backgroundColor: `${colors[key]}22`,
                 tension: 0.35,
                 fill: false,
                 pointRadius: 5,
@@ -117,7 +123,7 @@ export default function PerformanceCharts({ periods }) {
       volumeChart.current?.destroy();
       rateChart.current?.destroy();
     };
-  }, [periods]);
+  }, [periods, metrics, volumeKeys, rateKeys, colors]);
 
   return (
     <section className="charts" aria-label="Performance charts">
